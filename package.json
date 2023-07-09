@@ -1,0 +1,10 @@
+{
+    "name": "chinese-card-games",
+    "version": "0.0.1",
+    "description": "website with multiple different chinese card games",
+    "dependencies": {
+        "express": "^4.18.2",
+        "react": "^18.2.0",
+        "socket.io": "^4.7.1"
+    }
+}
