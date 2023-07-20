@@ -1,4 +1,3 @@
-var socket = io();
 
 var createRoomButton = document.getElementById('test')
 var joinRoomButton = document.getElementById('jrButton')
@@ -7,6 +6,27 @@ var showRoomList = document.getElementById('srButton')
 var roomList = document.getElementById('roomlist')
 var usernameForm = document.getElementById('username')
 var usernameConfirm = document.getElementById('createName')
+
+const sessionID = localStorage.getItem("sessionID");
+const username = localStorage.getItem("username");
+const userID = localStorage.getItem('userID')
+var socket = io({
+    auth: {
+        sessionID: sessionID,
+        username: username,
+        userID: userID
+    }
+});
+
+socket.on("session", ({ sessionID, userID, username}) => {
+  // attach the session ID to the next reconnection attempts
+  socket.auth = { sessionID };
+  // store it in the localStorage
+  localStorage.setItem("sessionID", sessionID);
+  // save the ID of the user
+  socket.username = username
+  socket.userID = userID;
+});
 
 usernameConfirm.addEventListener('click', function(e) {
     e.preventDefault()
@@ -40,7 +60,6 @@ showRoomList.addEventListener('click', function(e){
         })
        
     })
-    console.log('ASYNC?')
 })
 socket.on('chat message', function(msg) {
     var item = document.createElement('li')

@@ -3,30 +3,75 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io")
+
 const io = new Server(server)
 const {Room} = require('./room.js')
 const {User} = require('./user.js')
+const crypto = require("crypto");
+const randomId = () => crypto.randomBytes(8).toString("hex");
+
+const { InMemorySessionStore } = require("./sessionStore");
+const sessionStore = new InMemorySessionStore();
 
 rooms = []
 users = []
 app.use('/', express.static(__dirname + '/client'));
-
+io.use((socket, next) => {
+    console.log('use')
+    const sessionID = socket.handshake.auth.sessionID;
+    console.log('sid: ' +socket.handshake.auth.sessionID)
+    if (sessionID) {
+      const session = sessionStore.findSession(sessionID);
+      if (session) {
+        socket.sessionID = sessionID;
+        socket.userID = session.userID;
+        socket.username = session.username;
+        return next();
+      }
+    }
+    const username = socket.handshake.auth.username;
+    /*
+    if (!username) {
+        console.log('broken')
+      return next(new Error("invalid username"));
+    }
+    */
+    socket.sessionID = randomId();
+    socket.userID = randomId();
+    socket.username = randomId()
+    next();
+  });
 io.on('connection', (socket) =>{
+  console.log('sessionID, user ID, username: ' + socket.sessionID, socket.userID, socket.username)
+
+  sessionStore.saveSession(socket.sessionID, {
+    userID: socket.userID,
+    username: socket.username,
+    connected: true,
+  });
+  socket.emit("session", {
+    sessionID: socket.sessionID,
+    userID: socket.userID,
+    username: socket.username,
+  });
+  socket.join(socket.userID);
+
+
     console.log('a user connected: ' + socket.id)
     
     socket.on('create name', (msg)=>{
-        socket.broadcast.emit('')
+      console.log('Creating name: ' + msg)
+      socket.username = msg
+      console.log(sessionStore.findSession(socket.sessionID))
     })
     socket.on('chat message', (msg) => {
         socket.broadcast.emit('chat message', msg)
         console.log('message: ' +msg)
     })
-    
-    socket.on('disconnect', ()=>{
-        console.log('user disconnected')
-    })
+
 
     socket.on('create room', (roomName) =>{
+
         console.log('creating room: ', roomName)
         if(rooms.some((r)=>r.roomName == roomName)){
             console.log("room name already taken")
@@ -55,6 +100,20 @@ io.on('connection', (socket) =>{
         console.log('Room List Requested')
         callback(rooms.map((r)=>r.roomName))
     })
+    socket.on("disconnect", async () => {
+        const matchingSockets = await io.in(socket.userID).allSockets();
+        const isDisconnected = matchingSockets.size === 0;
+        if (isDisconnected) {
+          // notify other users
+          socket.broadcast.emit("user disconnected", socket.userID);
+          // update the connection status of the session
+          sessionStore.saveSession(socket.sessionID, {
+            userID: socket.userID,
+            username: socket.username,
+            connected: false,
+          });
+        }
+      });
     
 })
 
