@@ -6,7 +6,6 @@ const { Server } = require("socket.io")
 
 const io = new Server(server)
 const {Room} = require('./room.js')
-const {User} = require('./user.js')
 const crypto = require("crypto");
 const randomId = () => crypto.randomBytes(8).toString("hex");
 
@@ -101,7 +100,7 @@ io.on('connection', (socket) =>{
         callback(rooms.map((r)=>r.roomName))
     })
     socket.on("disconnect", async () => {
-        const matchingSockets = await io.in(socket.userID).allSockets();
+        const matchingSockets = await io.in(socket.userID).fetchSockets();
         const isDisconnected = matchingSockets.size === 0;
         if (isDisconnected) {
           // notify other users

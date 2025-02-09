@@ -1,0 +1,19 @@
+To Do:
+	- Refamiliarize
+		-Go through each file, understand what everything does
+		- Read docs for unfamiliar things
+		-Create docs for ease of understanding later
+	- Express Routing 
+		- Allow access to gamerooms, to send information about subroom
+	- Front-End
+		-Pretify Game 
+		-Create game table 
+			-Felt img background
+			-Bottom Row filled with cards
+			-Circle icons representing other players (Cardzmania)
+	- Node
+		-Game implementation
+			- Cards in hand information
+			-Cards in play information
+	- Firebase
+		- Firebase implementation for User Authentication	

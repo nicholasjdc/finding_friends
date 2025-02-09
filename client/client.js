@@ -2,8 +2,8 @@
 var createRoomButton = document.getElementById('test')
 var joinRoomButton = document.getElementById('jrButton')
 var roomName = document.getElementById('roomName')
-var showRoomList = document.getElementById('srButton')
-var roomList = document.getElementById('roomlist')
+var showRoomListH = document.getElementById('srButton')
+var roomListH = document.getElementById('roomlist')
 var usernameForm = document.getElementById('username')
 var usernameConfirm = document.getElementById('createName')
 
@@ -47,18 +47,15 @@ joinRoomButton.addEventListener('click', function(e){
         socket.emit('join room', roomName.value)
     }
 })
-showRoomList.addEventListener('click', function(e){
+showRoomListH.addEventListener('click', function(e){
     e.preventDefault()
-    socket.emit('room list', {
-        payload: 'roomlistrequest'
-    }, function(responseData) {
-        roomList.innerHTML = ''
-        responseData.forEach(r=>{
+    getRoomList().then((roomList)=>{
+        roomListH.innerHTML = ''
+        roomList.forEach(r=>{
             var node = document.createElement('li')
             node.appendChild(document.createTextNode(r))
             roomList.appendChild(node)
         })
-       
     })
 })
 socket.on('chat message', function(msg) {
@@ -67,3 +64,25 @@ socket.on('chat message', function(msg) {
     messages.appendChild(item)
     window.scrollTo(0, document.body.scrollHeight)
 })
+const updateDisplayName = ()=>{
+    socket.emit('create name', usernameForm.value)
+}
+const createRoom = ()=>{
+    socket.emit('create room', roomName.value)
+}
+
+const joinRoom = () =>{
+    socket.emit('join room', roomName.value)
+}
+const getRoomList = () =>{
+    try{
+        socket.emit('room list', {
+            payload: 'roomlistrequest'
+        }, function(roomList) {
+            return roomList
+        })
+    }catch(e){
+        throw Error(e)
+    }
+    
+}
